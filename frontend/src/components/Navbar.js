@@ -62,7 +62,11 @@ export default function Navbar({ onReset, hasResults }) {
   return (
     <nav style={navBaseStyle}>
       <button
-        onClick={onReset}
+        type="button"
+        onClick={() => {
+          onReset();
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }}
         style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 12 }}
       >
         <div style={brandIconStyle}>⚡</div>
