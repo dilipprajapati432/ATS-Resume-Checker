@@ -22,7 +22,10 @@ export default function App() {
 
   const handleReset = () => {
     setResults(null);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    // Use a small delay to allow the DOM to render the form before scrolling
+    setTimeout(() => {
+      document.getElementById('analyze-section')?.scrollIntoView({ behavior: 'smooth' });
+    }, 10);
   };
 
   return (
