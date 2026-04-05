@@ -107,7 +107,7 @@ export default function Footer() {
         <div style={{ display: 'flex', gap: 60, flexWrap: 'wrap' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             <h4 style={{ fontSize: 10, textTransform: 'uppercase', color: 'rgba(240,240,245,0.3)', fontWeight: 700, letterSpacing: '1px', marginBottom: 4 }}>Quick Links</h4>
-            <a href="#" className="footer-link" onClick={(e) => { e.preventDefault(); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>Home</a>
+            <button className="footer-link-btn" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>Home</button>
             <button onClick={() => setActiveModal('about')} className="footer-link-btn">About Us</button>
             <a href="#how-it-works" className="footer-link">Methodology</a>
             <a href="#analyze-section" className="footer-link">Analysis Tool</a>
