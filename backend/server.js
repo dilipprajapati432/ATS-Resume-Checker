@@ -206,8 +206,20 @@ app.post('/api/analyze', upload.single('resumeFile'), async (req, res) => {
 
 app.get('/api/health', (req, res) => res.json({ ok: true }));
 
-const b = path.join(__dirname, '..', 'frontend', 'build');
-app.use(express.static(b));
-app.get('*', (req, res) => res.sendFile(path.join(b, 'index.html')));
+const fs = require('fs');
+const buildPath = path.join(__dirname, '..', 'frontend', 'build');
+
+// ONLY serve static files if they exist locally
+if (fs.existsSync(buildPath)) {
+  app.use(express.static(buildPath));
+  app.get('*', (req, res) => res.sendFile(path.join(buildPath, 'index.html')));
+} else {
+  // If no frontend, provide a simple JSON landing page
+  app.get('/', (req, res) => res.json({ 
+    message: "ResumeIQ API is running.", 
+    status: "production",
+    frontend: "Hosted on Vercel" 
+  }));
+}
 
 app.listen(PORT, () => console.log(`🚀 API on ${PORT}`));
