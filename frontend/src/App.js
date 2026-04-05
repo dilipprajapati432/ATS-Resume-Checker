@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Toaster } from 'react-hot-toast';
 import { Routes, Route } from 'react-router-dom';
 import Navbar from './components/Navbar';
@@ -12,6 +12,11 @@ import NotFound from './components/NotFound';
 export default function App() {
   const [results, setResults] = useState(null);
   const [analyzing, setAnalyzing] = useState(false);
+
+  // Force scroll to top on refresh
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'instant' });
+  }, []);
 
   const handleResults = (data) => {
     setResults(data);
