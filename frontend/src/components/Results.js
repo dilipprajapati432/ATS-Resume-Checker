@@ -60,11 +60,6 @@ function ScoreCard({ label, icon, score, description, delay }) {
         <span style={{ fontFamily: 'DM Mono, monospace', fontSize: 24, color, fontWeight: 600 }}>{score}</span>
       </div>
       <ScoreBar score={score} color={color} />
-      {description && (
-        <div style={{ fontSize: 11, color: 'rgba(240,240,245,0.3)', lineHeight: 1.4, marginTop: 4 }}>
-          {description}
-        </div>
-      )}
     </div>
   );
 }
@@ -114,7 +109,7 @@ export default function Results({ data, onReset }) {
 
         {/* Header */}
         <div className="results-header" style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 40, flexWrap: 'wrap', gap: 24 }}>
-          <div style={{ minWidth: 280 }}>
+          <div style={{ minWidth: 280, flex: 1 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16, flexWrap: 'wrap' }}>
               <span style={{
                 fontSize: 10, fontFamily: 'DM Mono, monospace', color: '#c8f04a',
@@ -131,7 +126,8 @@ export default function Results({ data, onReset }) {
           <button onClick={onReset} className="shiny-btn" style={{
             background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)',
             borderRadius: 100, padding: '12px 24px', color: '#f0f0f5', fontSize: 14,
-            cursor: 'pointer', position: 'relative', overflow: 'hidden'
+            cursor: 'pointer', position: 'relative', overflow: 'hidden',
+            marginLeft: 'auto', flexShrink: 0
           }}>
             ← Analyze Another
           </button>
@@ -256,11 +252,14 @@ export default function Results({ data, onReset }) {
               {[
                 { title: 'Found Keywords', items: data.keywords?.found, color: '#3ddc84', bg: 'rgba(61,220,132,0.1)', border: 'rgba(61,220,132,0.15)', icon: '✓' },
                 { title: 'Critical Missing Skills', items: data.keywords?.missing, color: '#ff5252', bg: 'rgba(255,82,82,0.1)', border: 'rgba(255,82,82,0.15)', icon: '✗' },
-              ].map(({ title, items, color, bg, border, icon }) => items?.length > 0 && (
+                { title: 'Core Competencies (Bonus)', items: data.keywords?.bonus, color: '#c8f04a', bg: 'rgba(200,240,74,0.1)', border: 'rgba(200,240,74,0.15)', icon: '✦' },
+              ].map(({ title, items, color, bg, border, icon }) => {
+                const cleanItems = [...new Set((items || []).flatMap(ix => typeof ix === 'string' ? ix.split(/[,;]/).map(s => s.trim()) : []).filter(Boolean))];
+                return cleanItems.length > 0 && (
                 <GlassCard key={title} style={{ padding: 40 }}>
                   <h3 style={{ fontSize: 16, fontWeight: 600, marginBottom: 24, color }}>{title.toUpperCase()}</h3>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12 }}>
-                    {items.map((kw, i) => (
+                    {cleanItems.map((kw, i) => (
                       <span key={i} className="keyword-tag" style={{
                         fontFamily: 'DM Mono, monospace', fontSize: 13,
                         background: bg, border: `1px solid ${border}`,
@@ -273,7 +272,7 @@ export default function Results({ data, onReset }) {
                     ))}
                   </div>
                 </GlassCard>
-              ))}
+              )})}
             </div>
           )}
 
@@ -316,6 +315,8 @@ export default function Results({ data, onReset }) {
             </div>
           )}
         </div>
+
+
       </div>
 
       <style>{`
