@@ -16,9 +16,9 @@ export default function Navbar({ onReset, hasResults }) {
     right: scrolled ? 'auto' : 0,
     transform: scrolled ? 'translateX(-50%)' : 'none',
     width: scrolled ? 'max-content' : '100%',
-    minWidth: scrolled ? '460px' : 'none',
-    height: scrolled ? 60 : 72,
-    padding: scrolled ? '0 24px' : '0 40px',
+    minWidth: scrolled ? 'clamp(320px, 92%, 1100px)' : 'none',
+    height: scrolled ? 66 : 72,
+    padding: scrolled ? '0 28px' : '0 40px',
     background: scrolled ? 'rgba(10,10,15,0.75)' : 'rgba(10,10,15,0.4)',
     backdropFilter: 'blur(24px)',
     borderBottom: scrolled ? 'none' : '1px solid rgba(255,255,255,0.05)',
@@ -70,7 +70,7 @@ export default function Navbar({ onReset, hasResults }) {
         style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 12 }}
       >
         <div style={brandIconStyle}>⚡</div>
-        <span style={{
+        <span className="brand-text-mobile" style={{
           fontFamily: 'Fraunces, serif', fontSize: scrolled ? 19 : 21,
           fontWeight: 500, color: '#f0f0f5', letterSpacing: '-0.5px',
           transition: 'font-size 0.5s ease'
@@ -79,7 +79,7 @@ export default function Navbar({ onReset, hasResults }) {
         </span>
       </button>
 
-      <div className="nav-flex-container" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+      <div className="nav-flex-container" style={{ display: 'flex', alignItems: 'center', gap: 32 }}>
         <a
           href="#how-it-works"
           onClick={e => { if (hasResults) onReset(); }}
@@ -131,20 +131,22 @@ export default function Navbar({ onReset, hasResults }) {
 
         @media (max-width: 768px) {
           nav { 
-            width: calc(100% - 24px) !important; 
+            width: calc(100% - 16px) !important; 
             min-width: auto !important; 
-            left: 12px !important; 
+            left: 8px !important; 
             transform: none !important; 
-            top: 12px !important;
-            padding: 0 10px !important;
+            top: 8px !important;
+            padding: 0 12px !important;
           }
-          .nav-flex-container { gap: 16px !important; }
-          .nav-hide-mobile { display: block !important; padding: 6px 4px !important; font-size: 13px !important; }
+          .nav-flex-container { gap: 8px !important; }
+          .nav-hide-mobile { display: none !important; } /* Hide 'How it works' on mobile for a cleaner, focused UI */
           .cta-btn-mobile { 
-            padding: 8px 12px !important; 
-            font-size: 13px !important;
+            padding: 8px 14px !important; 
+            font-size: 11px !important;
             white-space: nowrap !important;
+            flex-shrink: 0 !important;
           }
+          .brand-text-mobile { font-size: 17px !important; }
         }
       `}</style>
     </nav>
