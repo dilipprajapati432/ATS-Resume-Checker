@@ -8,34 +8,22 @@ const Groq = require('groq-sdk');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
-const isProd = process.env.NODE_ENV === 'production';
 
 const allowedOrigin = process.env.FRONTEND_URL || 'http://localhost:3000';
-app.use(cors({ 
-  origin: allowedOrigin,
-  methods: ['GET', 'POST'],
-  credentials: true
-}));
-
+app.use(cors({ origin: allowedOrigin, methods: ['GET', 'POST'], credentials: true }));
 app.use(express.json({ limit: '10mb' }));
 
-const upload = multer({
-  storage: multer.memoryStorage(),
-  limits: { fileSize: 5 * 1024 * 1024 }
-});
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 const GROQ_MODEL = 'llama-3.3-70b-versatile';
 
 /**
- * Normalizes AI output to ensure the frontend never receives 'undefined' or static '75'
+ * Normalizes AI output for Industry-Grade Accuracy
  */
 function normalizeAnalysis(data, resumeTextLength, jdLength) {
-  console.log(`🔍 Received AI Data for Resume(${resumeTextLength}) & JD(${jdLength})`);
-  
-  // 1. Dynamic Score Extraction (Check multiple possible keys)
-  const scoreKeys = ['overall_score', 'score', 'ATS_Score', 'total_score', 'Score'];
+  const scoreKeys = ['overall_score', 'score', 'ATS_Score', 'total_score'];
   let foundScore = null;
   for (const key of scoreKeys) {
     if (data[key] !== undefined) {
@@ -44,22 +32,20 @@ function normalizeAnalysis(data, resumeTextLength, jdLength) {
     }
   }
 
-  // 2. Strict Fallback: Use 0 if truly missing, so we can detect failure
   const finalScore = (foundScore !== null && !isNaN(foundScore)) ? foundScore : 0;
-  console.log(`🎯 Final Computed Score: ${finalScore}`);
 
   const defaults = {
     overall_score: finalScore,
     verdict: data.verdict || (finalScore > 80 ? 'Strong' : (finalScore > 50 ? 'Good' : 'Fair')),
     verdict_color: data.verdict_color || (finalScore > 80 ? 'green' : (finalScore > 50 ? 'yellow' : 'orange')),
-    summary: data.summary || (jdLength < 50 ? "⚠️ Job description is very short. For better accuracy, please paste the full responsibilities and requirements." : "Comprehensive analysis complete."),
+    summary: data.summary || "Comprehensive analysis complete.",
     scores: {
       keyword_match: { score: 0, label: "Keyword Match", icon: "🔑" },
       format_ats: { score: 0, label: "ATS Format", icon: "📄" },
       experience_match: { score: 0, label: "Experience Fit", icon: "💼" },
       skills_alignment: { score: 0, label: "Skills Alignment", icon: "⚡" },
       education_match: { score: 0, label: "Education Match", icon: "🎓" },
-      quantification: { score: 0, label: "Impact & Metrics", icon: "📊" }
+      impact_results: { score: 0, label: "Impact & Results", icon: "📊" }
     },
     keywords: { found: [], missing: [], bonus: [] },
     issues: [],
@@ -70,18 +56,17 @@ function normalizeAnalysis(data, resumeTextLength, jdLength) {
     candidate_experience_years: data.candidate_experience_years || 'N/A'
   };
 
-  // Map sub-scores
   if (data.scores) {
     Object.keys(defaults.scores).forEach(key => {
-      const s = data.scores[key];
+      const s = data.scores[key] || data.scores.quantification || data.scores.impact_value;
       if (s !== undefined && s !== null) {
         defaults.scores[key].score = parseInt(s.score ?? s) ?? 70;
+        if (s.description) defaults.scores[key].description = s.description;
       }
     });
   }
 
-  // Final Data Assembly
-  const normalized = {
+  return {
     ...defaults,
     ...data,
     overall_score: finalScore,
@@ -90,17 +75,8 @@ function normalizeAnalysis(data, resumeTextLength, jdLength) {
       found: Array.isArray(data?.keywords?.found) ? data.keywords.found : [],
       missing: Array.isArray(data?.keywords?.missing) ? data.keywords.missing : [],
       bonus: Array.isArray(data?.keywords?.bonus) ? data.keywords.bonus : []
-    },
-    issues: Array.isArray(data.issues) ? data.issues : [],
-    suggestions: Array.isArray(data.suggestions) ? data.suggestions : [],
-    strengths: Array.isArray(data.strengths) ? data.strengths : []
+    }
   };
-
-  // Ensure UI boxes have content
-  if (normalized.issues.length === 0) normalized.issues = [{ severity: 'info', title: 'Formatting', description: 'Your resume structure is legible for ATS scanners.' }];
-  if (normalized.strengths.length === 0) normalized.strengths = ['Professional document layout'];
-
-  return normalized;
 }
 
 async function extractTextFromFile(file) {
@@ -114,52 +90,45 @@ async function extractTextFromFile(file) {
 }
 
 const SCHEMA_PROMPT = `
-CRITICAL: Do not use placeholding values. Calculate every score based on the actual resume text provided.
+CRITICAL: You are an Expert Career Coach & Recruiter. Use weighted scoring (Impact=35%, Keywords=25%, Experience=20%, Skills=15%, Edu=5%).
 Respond ONLY with a JSON object:
 {
   "overall_score": (int 0-100),
   "verdict": "Excellent|Strong|Good|Fair|Poor",
-  "verdict_color": "green|blue|yellow|orange|red",
-  "summary": "Specific analysis...",
+  "summary": "Professional insight focusing on project complexity or ROI achievements.",
   "scores": {
     "keyword_match": {"score": (int)},
     "format_ats": {"score": (int)},
     "experience_match": {"score": (int)},
     "skills_alignment": {"score": (int)},
     "education_match": {"score": (int)},
-    "quantification": {"score": (int)}
+    "impact_results": {"score": (int), "description": "Specific evidence found"}
   },
   "keywords": {"found":[], "missing":[], "bonus":[]},
   "issues": [{"severity":"critical|warning|info", "title":"", "description":""}],
   "suggestions": [{"priority":"high|medium|low", "category":"", "title":"", "action":""}],
-  "strengths": [],
-  "job_title_match": "...",
-  "experience_years_required": "...",
-  "candidate_experience_years": "..."
+  "job_title_match": "Detailed title comparison",
+  "candidate_experience_years": "Actual Yrs detected"
 }`;
 
 async function analyzeWithGemini(resume, jd, modelName) {
-  const prompt = `Strictly evaluate this resume against the JD. Use absolute consistency.
-  IDENTITY RULE: NEVER mention you are an AI, bot, or LLM. Speak as a Professional ATS Analysis System.
-  EXPERIENCE RULE: If the candidate has NO professional work history, set "candidate_experience_years" to "0 years (Fresher)" and penalize "experience_match".
+  const prompt = `Strictly evaluate this resume against the JD. 
+  MANDATORY DYNAMIC SCORING RULES:
+  1. IF FRESHER/INTERN (0-1 years): Focus 100% on Technical Depth and Project Intensity. Reward "Built X using Y." NEVER penalize for lacking corporate ROI/Revenue.
+  2. IF EXPERIENCED: Strictly mandate Quantifiable Metrics.
   RESUME: ${resume}
   JD: ${jd}
   ${SCHEMA_PROMPT}`;
 
-  const model = genAI.getGenerativeModel({ 
-    model: modelName,
-    generationConfig: { temperature: 0, topP: 0.1 } 
-  });
+  const model = genAI.getGenerativeModel({ model: modelName });
   const result = await model.generateContent(prompt);
   const text = result.response.text().replace(/```json|```/g, '').trim();
-  console.log(`🤖 ${modelName} Raw Data:`, text.substring(0, 100));
   return normalizeAnalysis(JSON.parse(text), resume.length, jd.length);
 }
 
 async function analyzeWithGroq(resume, jd) {
-  const prompt = `You are a Professional ATS Analysis System. Give consistent, identical scores for identical content. 
-  IDENTITY RULE: NEVER mention you are an AI, bot, or LLM. Do not use phrases like "Based on my analysis as an AI".
-  EXPERIENCE RULE: If candidate is a Fresher with 0 experience, set "candidate_experience_years" to "0 years (Fresher)".
+  const prompt = `Strictly evaluate this resume against the JD. 
+  Adaptive Rule: Reward projects for students, ROI for professionals.
   RESUME: ${resume}
   JD: ${jd}
   ${SCHEMA_PROMPT}`;
@@ -170,9 +139,7 @@ async function analyzeWithGroq(resume, jd) {
     temperature: 0,
     response_format: { type: 'json_object' }
   });
-  const text = chat.choices[0].message.content;
-  console.log('🤖 Raw AI Content:', text.substring(0, 100));
-  return normalizeAnalysis(JSON.parse(text), resume.length, jd.length);
+  return normalizeAnalysis(JSON.parse(chat.choices[0].message.content), resume.length, jd.length);
 }
 
 app.post('/api/analyze', upload.single('resumeFile'), async (req, res) => {
@@ -183,15 +150,21 @@ app.post('/api/analyze', upload.single('resumeFile'), async (req, res) => {
 
     if (!txt.trim() || !jd.trim()) return res.status(400).json({ error: 'Data missing' });
 
-    console.log(`📩 Request Received: Resume(${txt.length}b), JD(${jd.length}b)`);
+    console.log(`📩 Request: Resume(${txt.length}b), JD(${jd.length}b)`);
 
-    const models = [process.env.GEMINI_MODEL || 'gemini-1.5-flash', 'gemini-1.5-flash-8b'];
+    const models = [
+      process.env.GEMINI_MODEL || 'gemini-1.5-flash',
+      'gemini-1.5-pro',
+      'gemini-2.0-flash'
+    ];
+
     for (const m of models) {
       try {
         const data = await analyzeWithGemini(txt, jd, m);
+        console.log(`✅ Success with ${m}`);
         return res.json({ success: true, data });
       } catch (e) {
-        console.error(`${m} failed, trying next...`);
+        console.error(`❌ Gemini ${m} failed:`, e.message || e);
       }
     }
 
@@ -199,8 +172,8 @@ app.post('/api/analyze', upload.single('resumeFile'), async (req, res) => {
     res.json({ success: true, data });
 
   } catch (err) {
-    console.error('Final failure:', err);
-    res.status(500).json({ error: 'System busy. Please try again.' });
+    console.error('Final system failure:', err);
+    res.status(500).json({ error: 'System busy. Please try again after a few minutes.' });
   }
 });
 
@@ -208,18 +181,11 @@ app.get('/api/health', (req, res) => res.json({ ok: true }));
 
 const fs = require('fs');
 const buildPath = path.join(__dirname, '..', 'frontend', 'build');
-
-// ONLY serve static files if they exist locally
 if (fs.existsSync(buildPath)) {
   app.use(express.static(buildPath));
   app.get('*', (req, res) => res.sendFile(path.join(buildPath, 'index.html')));
 } else {
-  // If no frontend, provide a simple JSON landing page
-  app.get('/', (req, res) => res.json({ 
-    message: "ResumeIQ API is running.", 
-    status: "production",
-    frontend: "Hosted on Vercel" 
-  }));
+  app.get('/', (req, res) => res.json({ message: "ResumeIQ API Live." }));
 }
 
 app.listen(PORT, () => console.log(`🚀 API on ${PORT}`));

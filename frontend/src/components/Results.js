@@ -46,7 +46,7 @@ function ScoreBar({ score, color }) {
   );
 }
 
-function ScoreCard({ label, icon, score, delay }) {
+function ScoreCard({ label, icon, score, description, delay }) {
   const color = score >= 75 ? '#3ddc84' : score >= 55 ? '#ffb830' : '#ff5252';
   return (
     <div className="reveal-up score-card-hover" style={{
@@ -60,6 +60,11 @@ function ScoreCard({ label, icon, score, delay }) {
         <span style={{ fontFamily: 'DM Mono, monospace', fontSize: 24, color, fontWeight: 600 }}>{score}</span>
       </div>
       <ScoreBar score={score} color={color} />
+      {description && (
+        <div style={{ fontSize: 11, color: 'rgba(240,240,245,0.3)', lineHeight: 1.4, marginTop: 4 }}>
+          {description}
+        </div>
+      )}
     </div>
   );
 }
@@ -178,7 +183,7 @@ export default function Results({ data, onReset }) {
         {/* Sub-score cards */}
         <div className="results-sub-grid" style={{ display: 'grid', gap: 16, marginBottom: 50 }}>
           {data.scores && Object.values(data.scores).map((s, i) => (
-            <ScoreCard key={i} label={s.label} icon={s.icon} score={s.score} delay={300 + (i * 100)} />
+            <ScoreCard key={i} label={s.label} icon={s.icon} score={s.score} description={s.description} delay={300 + (i * 100)} />
           ))}
         </div>
 
