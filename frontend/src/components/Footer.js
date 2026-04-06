@@ -51,7 +51,7 @@ export default function Footer() {
   const [activeModal, setActiveModal] = useState(null);
 
   const legalContent = {
-    privacy: `PRIVACY POLICY\nLast Updated: April 2026\n\n1. DATA COLLECTION\nResumeIQ processes strictly the resume text and job descriptions you provide for real-time analysis. We do not store your personal identifiable information (PII) on a permanent basis.\n\n2. ANALYSIS LOGIC\nOur AI-driven engine compares your skills against job market demand. This analysis is performed in memory and is transient.\n\n3. THIRD PARTY HANDLING\nWe do not sell or share your resume data with external recruiters or advertising networks.\n\n4. CONTACT\nFor any data-related inquiries, reach out to us at: dilipkohar4320@gmail.com`,
+    privacy: `PRIVACY POLICY\nLast Updated: April 2026\n\n1. DATA COLLECTION\nResumeIQ processes the resume text and job descriptions you provide solely for real-time analysis. We do NOT store, log, or retain any resume content or personal information on our own servers.\n\n2. THIRD-PARTY AI PROCESSING\nTo perform analysis, your resume text (extracted as plain text from your PDF or pasted input) is transmitted to third-party AI services — specifically Google Gemini and Groq. These providers process the text to generate scoring and feedback. Their own data retention and privacy policies apply:\n  • Google Gemini: https://ai.google.dev/gemini-api/terms\n  • Groq: https://groq.com/privacy-policy/\n\n3. WHAT WE DO NOT DO\nWe do not sell, share, or forward your resume data to recruiters, advertisers, or any other third parties beyond the AI providers listed above.\n\n4. IN-MEMORY PROCESSING\nYour file is held in server memory only for the duration of the analysis request. Once a response is returned, all data is immediately discarded.\n\n5. CONTACT\nFor any data-related inquiries, reach out to us at: dilipkohar4320@gmail.com`,
     terms: `TERMS OF SERVICE\nLast Updated: April 2026\n\n1. SCOPE OF SERVICE\nResumeIQ is an AI-powered advisory tool designed to assist candidates in optimizing their resumes for ATS (Applicant Tracking Systems).\n\n2. LIMITATION OF LIABILITY\nWhile we strive for maximum accuracy, ResumeIQ does not guarantee employment or specific interview outcomes. Our scores are directional benchmarks based on industry standards.\n\n3. USER CONDUCT\nYou agree not to misuse the platform for batch data scraping or deceptive representation.\n\n4. INQUIRIES\nTechnical or usage questions can be sent to: dilipkohar4320@gmail.com`,
     about: `ABOUT RESUMEIQ\n\nResumeIQ was born out of a simple observation: the modern job market is controlled by algorithms, but resumes are written by humans. This gap often prevents qualified talent from even reaching an interview.\n\nOUR MISSION\nTo democratize high-end ATS intelligence. We believe every candidate deserves a fair chance to be seen by a human recruiter. By using state-of-the-art AI (Gemini & Groq), we provide the same level of analysis used by fortune 500 companies—available to everyone.\n\nDEVELOPED BY\nDilip Prajapati\n\nJoin us in making the job search more transparent and rewarding.`
   };
@@ -98,7 +98,7 @@ export default function Footer() {
               display: 'flex', alignItems: 'center', gap: 7, fontWeight: 700, letterSpacing: '0.4px',
               textTransform: 'uppercase', boxShadow: '0 2px 10px rgba(61,220,132,0.05)'
             }}>
-              <ShieldIcon size={12} /> Privacy-First: No Data Storage
+              <ShieldIcon size={12} /> Not Stored On Our Servers
             </div>
           </div>
         </div>

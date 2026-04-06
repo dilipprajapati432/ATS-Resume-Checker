@@ -17,28 +17,21 @@ const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 *
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
-const GROQ_MODEL = 'llama-3.3-70b-versatile';
+const GROQ_MODEL = 'llama-3.1-8b-instant';
 
 /**
  * Normalizes AI output for Industry-Grade Accuracy
  */
 function normalizeAnalysis(data, resumeTextLength, jdLength) {
-  const scoreKeys = ['overall_score', 'score', 'ATS_Score', 'total_score'];
-  let foundScore = null;
-  for (const key of scoreKeys) {
-    if (data[key] !== undefined) {
-      foundScore = parseInt(data[key]);
-      break;
-    }
-  }
-
-  const finalScore = (foundScore !== null && !isNaN(foundScore)) ? foundScore : 0;
+  // NOTE: We intentionally ignore the AI's overall_score — it is always recalculated
+  // from weighted sub-scores to guarantee mathematical consistency.
+  let finalScore = 0;
 
   const defaults = {
-    overall_score: finalScore,
-    verdict: data.verdict || (finalScore > 80 ? 'Strong' : (finalScore > 50 ? 'Good' : 'Fair')),
-    verdict_color: data.verdict_color || (finalScore > 80 ? 'green' : (finalScore > 50 ? 'yellow' : 'orange')),
-    summary: data.summary || "Comprehensive analysis complete.",
+    overall_score: 0,
+    verdict: data.verdict || 'Good',
+    verdict_color: data.verdict_color || 'yellow',
+    summary: data.summary || "Comprehensive analysis complete. Focus on highlighting quantifiable achievements.",
     scores: {
       keyword_match: { score: 0, label: "Keyword Match", icon: "🔑" },
       format_ats: { score: 0, label: "ATS Format", icon: "📄" },
@@ -58,18 +51,39 @@ function normalizeAnalysis(data, resumeTextLength, jdLength) {
 
   if (data.scores) {
     Object.keys(defaults.scores).forEach(key => {
-      const s = data.scores[key] || data.scores.quantification || data.scores.impact_value;
+      const s = data.scores[key]; // FIX: Only read the exact key — no wrong field fallbacks
       if (s !== undefined && s !== null) {
-        defaults.scores[key].score = parseInt(s.score ?? s) ?? 70;
+        const parsed = parseInt(s.score ?? s);
+        defaults.scores[key].score = Math.min(100, Math.max(0, isNaN(parsed) ? 0 : parsed)); // FIX: 0 fallback, not 70
         if (s.description) defaults.scores[key].description = s.description;
       }
     });
+
+    // Programmatically calculate overall_score exactly to avoid LLM math mistakes
+    const weights = {
+      keyword_match: 0.25,      // 25%
+      skills_alignment: 0.20,   // 20%
+      format_ats: 0.15,         // 15%
+      experience_match: 0.15,   // 15%
+      impact_results: 0.15,     // 15%
+      education_match: 0.10     // 10%
+    };
+
+    let calculatedTotal = 0;
+    Object.keys(weights).forEach(k => {
+      calculatedTotal += (defaults.scores[k].score * weights[k]);
+    });
+    finalScore = Math.round(calculatedTotal); // FIX: Always use weighted calc — never fall back to AI's score
   }
+
+  // Determine final verdict based on strict thresholds
+  const finalVerdict = finalScore >= 85 ? 'Excellent' : finalScore >= 75 ? 'Strong' : finalScore >= 60 ? 'Good' : finalScore > 40 ? 'Fair' : 'Poor';
 
   return {
     ...defaults,
     ...data,
     overall_score: finalScore,
+    verdict: finalVerdict,
     scores: defaults.scores,
     keywords: {
       found: Array.isArray(data?.keywords?.found) ? data.keywords.found : [],
@@ -90,32 +104,39 @@ async function extractTextFromFile(file) {
 }
 
 const SCHEMA_PROMPT = `
-CRITICAL: You are an Expert Career Coach & Recruiter. Use weighted scoring (Impact=35%, Keywords=25%, Experience=20%, Skills=15%, Edu=5%).
+CRITICAL: You are an Expert Career Coach & Recruiter.
+Score EVERY individual category strictly on a 0-100 percent scale (e.g., 85, not 12).
 Respond ONLY with a JSON object:
 {
   "overall_score": (int 0-100),
   "verdict": "Excellent|Strong|Good|Fair|Poor",
-  "summary": "Professional insight focusing on project complexity or ROI achievements.",
+  "summary": "Write a 1-2 sentence professional recruiter summary highlighting specific technical strengths and explicitly noting any critical gaps for the role.",
   "scores": {
-    "keyword_match": {"score": (int)},
-    "format_ats": {"score": (int)},
-    "experience_match": {"score": (int)},
-    "skills_alignment": {"score": (int)},
-    "education_match": {"score": (int)},
-    "impact_results": {"score": (int), "description": "Specific evidence found"}
+    "keyword_match": {"score": (int 0-100)},
+    "format_ats": {"score": (int 0-100)},
+    "experience_match": {"score": (int 0-100)},
+    "skills_alignment": {"score": (int 0-100)},
+    "education_match": {"score": (int 0-100)},
+    "impact_results": {"score": (int 0-100), "description": "High score for advanced capability"}
   },
-  "keywords": {"found":[], "missing":[], "bonus":[]},
+  "keywords": {
+    "found":["Extract exact words/phrases that appear verbatim in BOTH the JD and the resume. NEVER use generic category labels."],
+    "missing":["Extract exact words/phrases that appear verbatim in the JD but are absent from the resume. NEVER use generic category labels."],
+    "bonus":["Extract exact skill names present in the resume but not mentioned in the JD."]
+  },
   "issues": [{"severity":"critical|warning|info", "title":"", "description":""}],
   "suggestions": [{"priority":"high|medium|low", "category":"", "title":"", "action":""}],
   "job_title_match": "Detailed title comparison",
-  "candidate_experience_years": "Actual Yrs detected"
+  "candidate_experience_years": "Strictly choose ONE: 'Current Student (1st/2nd Year)' | 'Pre-final Year Student' | 'Fresher (0 Years)' | '1-2 Years' | '3-5 Years' | '5+ Years'"
 }`;
 
 async function analyzeWithGemini(resume, jd, modelName) {
   const prompt = `Strictly evaluate this resume against the JD. 
   MANDATORY DYNAMIC SCORING RULES:
-  1. IF FRESHER/INTERN (0-1 years): Focus 100% on Technical Depth and Project Intensity. Reward "Built X using Y." NEVER penalize for lacking corporate ROI/Revenue.
-  2. IF EXPERIENCED: Strictly mandate Quantifiable Metrics.
+  1. IF FRESHER/INTERN/STUDENT: Grade 'Impact & Results' strictly on project technical depth. Grade 'Experience Fit' purely on actual Internships/Work History. DO NOT raise issues about 'quantifiable metrics' or 'ROI' — these are irrelevant for students.
+  2. IF EXPERIENCED: Strictly mandate Quantifiable Metrics and raise issues when absent.
+  3. STRICT DOMAIN PENALTY: If the JD requires a specialized technical domain and the resume only has general software engineering projects, you MUST brutally penalize 'skills_alignment' and 'keyword_match' (score 10-40). DO NOT inflate scores just because they can code.
+  Determine candidate_experience_years dynamically based on education dates and tenure.
   RESUME: ${resume}
   JD: ${jd}
   ${SCHEMA_PROMPT}`;
@@ -128,7 +149,11 @@ async function analyzeWithGemini(resume, jd, modelName) {
 
 async function analyzeWithGroq(resume, jd) {
   const prompt = `Strictly evaluate this resume against the JD. 
-  Adaptive Rule: Reward projects for students, ROI for professionals.
+  MANDATORY DYNAMIC SCORING RULES:
+  1. IF FRESHER/INTERN/STUDENT: Grade 'Impact & Results' strictly on project technical depth. Grade 'Experience Fit' purely on actual Internships/Work History. DO NOT raise issues about 'quantifiable metrics' or 'ROI' — these are irrelevant for students.
+  2. IF EXPERIENCED: Strictly mandate Quantifiable Metrics and raise issues when absent.
+  3. STRICT DOMAIN PENALTY: If the JD requires a specialized technical domain and the resume only has general software engineering projects, you MUST brutally penalize 'skills_alignment' and 'keyword_match' (score 10-40). DO NOT inflate scores just because they can code.
+  Determine candidate_experience_years dynamically based on education dates and tenure.
   RESUME: ${resume}
   JD: ${jd}
   ${SCHEMA_PROMPT}`;
