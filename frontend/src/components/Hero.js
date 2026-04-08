@@ -42,9 +42,10 @@ const StatCard = ({ target, suffix, label, index }) => {
     >
       <div style={{
         fontFamily: 'Fraunces, serif', fontSize: 44, fontWeight: 500, color: '#c8f04a',
-        lineHeight: 1, marginBottom: 8, display: 'flex', justifyContent: 'center', alignItems: 'baseline'
+        lineHeight: 1, marginBottom: 8, display: 'flex', justifyContent: 'center', alignItems: 'baseline',
+        fontVariantNumeric: 'tabular-nums'
       }}>
-        <span style={{ transition: 'all 0.5s ease' }}>{count}</span>
+        <span>{count}</span>
         <span style={{ fontSize: 24, marginLeft: 2, opacity: 0.8 }}>{suffix}</span>
       </div>
       <div style={{ fontSize: 13, color: 'rgba(240,240,245,0.5)', lineHeight: 1.4 }}>{label}</div>
@@ -170,14 +171,18 @@ export default function Hero() {
         </div>
 
         {/* Stats row */}
-        <div style={{
-          display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)',
-          gap: 1, marginTop: 70,
-          background: 'rgba(255,255,255,0.05)',
-          border: '1px solid rgba(255,255,255,0.08)',
-          borderRadius: 20, overflow: 'hidden',
-          boxShadow: '0 20px 50px rgba(0,0,0,0.3)',
-        }}>
+        <div 
+          className="stats-row"
+          style={{
+            display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)',
+            gap: 1, marginTop: 70,
+            background: 'rgba(255,255,255,0.05)',
+            border: '1px solid rgba(255,255,255,0.08)',
+            borderRadius: 20, overflow: 'hidden',
+            boxShadow: '0 20px 50px rgba(0,0,0,0.3)',
+            transform: 'translateZ(0)',
+          }}
+        >
           {statsData.map((s, i) => (
             <StatCard key={i} target={s.target} suffix={s.suffix} label={s.label} index={i} />
           ))}
@@ -214,7 +219,7 @@ export default function Hero() {
         }
 
         @media (max-width: 768px) {
-          .stats-row { gridTemplateColumns: 1fr; }
+          .stats-row { grid-template-columns: 1fr; }
           .stat-card { borderRight: none; borderBottom: 1px solid rgba(255,255,255,0.06); }
         }
       `}</style>
