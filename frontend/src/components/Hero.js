@@ -170,7 +170,6 @@ export default function Hero() {
           <span style={{ height: 1, width: 32, background: 'linear-gradient(to left, transparent, rgba(255,255,255,0.08))' }} />
         </div>
 
-        {/* Stats row */}
         <div 
           className="stats-row"
           style={{
@@ -181,6 +180,7 @@ export default function Hero() {
             borderRadius: 20, overflow: 'hidden',
             boxShadow: '0 20px 50px rgba(0,0,0,0.3)',
             transform: 'translateZ(0)',
+            width: '100%',
           }}
         >
           {statsData.map((s, i) => (
@@ -205,12 +205,12 @@ export default function Hero() {
           background: rgba(200,240,74,0.03) !important;
         }
 
-        .orb-1 { animation: float 10s ease-in-out infinite; }
-        .orb-2 { animation: float 14s ease-in-out infinite reverse; }
+        .orb-1 { animation: float 15s ease-in-out infinite; }
+        .orb-2 { animation: float 20s ease-in-out infinite reverse; }
 
         @keyframes float {
-          0%, 100% { transform: translate(0, 0); }
-          50% { transform: translate(20px, -20px); }
+          0%, 100% { transform: translate3d(0, 0, 0); }
+          50% { transform: translate3d(15px, -15px, 0); }
         }
 
         @keyframes pulse {

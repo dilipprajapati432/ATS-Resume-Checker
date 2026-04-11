@@ -29,7 +29,11 @@
   --shadow-lg: 0 8px 48px rgba(0,0,0,0.6);
 }
 
-html { scroll-behavior: smooth; }
+html { 
+  scroll-behavior: smooth; 
+  overflow-x: hidden;
+  height: 100%;
+}
 
 body {
   background: var(--bg);
@@ -37,12 +41,14 @@ body {
   font-family: var(--font-body);
   font-size: 16px;
   line-height: 1.6;
-  min-height: 100vh;
+  min-height: 100dvh;
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
+  width: 100%;
+  position: relative;
 }
 
-#root { min-height: 100vh; }
+#root { min-height: 100dvh; }
 
 ::selection { background: rgba(200, 240, 74, 0.25); color: var(--text); }
 

@@ -4,33 +4,59 @@ export default function Navbar({ onReset, hasResults }) {
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 20);
+    let lastScrollY = window.scrollY;
+    const onScroll = () => {
+      const currentScrollY = window.scrollY;
+      // Add hysteresis: enter floating state at 60px, exit at 20px
+      if (!scrolled && currentScrollY > 60) {
+        setScrolled(true);
+      } else if (scrolled && currentScrollY < 20) {
+        setScrolled(false);
+      }
+      lastScrollY = currentScrollY;
+    };
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
-  }, []);
+  }, [scrolled]);
 
   const navBaseStyle = {
     position: 'fixed',
-    top: scrolled ? 12 : 0,
-    left: scrolled ? '50%' : 0,
-    right: scrolled ? 'auto' : 0,
-    transform: scrolled ? 'translateX(-50%)' : 'none',
-    width: scrolled ? 'max-content' : '100%',
-    minWidth: scrolled ? 'clamp(320px, 92%, 1100px)' : 'none',
+    top: 0,
+    left: 0,
+    right: 0,
+    width: '100%',
     height: scrolled ? 66 : 72,
     padding: scrolled ? '0 28px' : '0 40px',
     background: scrolled ? 'rgba(10,10,15,0.75)' : 'rgba(10,10,15,0.4)',
     backdropFilter: 'blur(24px)',
     borderBottom: scrolled ? 'none' : '1px solid rgba(255,255,255,0.05)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    zIndex: 1000,
+    transition: 'all 0.5s cubic-bezier(0.16, 1, 0.3, 1)',
+  };
+
+  const floatingContainerStyle = {
+    position: 'fixed',
+    top: scrolled ? 12 : 0,
+    left: '50%',
+    transform: `translateX(-50%) ${scrolled ? 'translateY(0)' : 'translateY(-10px)'}`,
+    width: scrolled ? 'max-content' : '100%',
+    minWidth: scrolled ? 'clamp(320px, 92%, 1100px)' : '100%',
+    padding: scrolled ? '0 28px' : '0 40px',
+    background: scrolled ? 'rgba(10,10,15,0.75)' : 'transparent',
+    backdropFilter: scrolled ? 'blur(24px)' : 'none',
     border: scrolled ? '1px solid rgba(255,255,255,0.08)' : 'none',
     borderRadius: scrolled ? 100 : 0,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
     zIndex: 1000,
-    transition: 'all 0.5s cubic-bezier(0.16, 1, 0.3, 1)',
+    transition: 'all 0.6s cubic-bezier(0.16, 1, 0.3, 1)',
     boxShadow: scrolled ? '0 20px 40px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.05)' : 'none',
-    willChange: 'transform, background, border-radius, padding',
+    pointerEvents: 'auto',
+    height: scrolled ? 64 : 72,
   };
 
   const brandIconStyle = {
@@ -60,7 +86,7 @@ export default function Navbar({ onReset, hasResults }) {
   };
 
   return (
-    <nav style={navBaseStyle}>
+    <nav style={floatingContainerStyle}>
       <button
         type="button"
         onClick={() => {
@@ -73,13 +99,13 @@ export default function Navbar({ onReset, hasResults }) {
         <span className="brand-text-mobile" style={{
           fontFamily: 'Fraunces, serif', fontSize: scrolled ? 19 : 21,
           fontWeight: 500, color: '#f0f0f5', letterSpacing: '-0.5px',
-          transition: 'font-size 0.5s ease'
+          transition: 'all 0.5s ease'
         }}>
           Resume<span style={{ color: '#c8f04a', fontStyle: 'italic' }}>IQ</span>
         </span>
       </button>
 
-      <div className="nav-flex-container" style={{ display: 'flex', alignItems: 'center', gap: 32 }}>
+      <div className="nav-flex-container" style={{ display: 'flex', alignItems: 'center', gap: scrolled ? 16 : 32, transition: 'gap 0.5s ease' }}>
         <a
           href="#how-it-works"
           onClick={e => { if (hasResults) onReset(); }}
@@ -92,8 +118,6 @@ export default function Navbar({ onReset, hasResults }) {
           href="#analyze-section"
           onClick={e => { if (hasResults) onReset(); }}
           style={ctaStyle}
-          onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.05)'; e.currentTarget.style.boxShadow = '0 8px 25px rgba(200,240,74,0.4)'; }}
-          onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.boxShadow = '0 4px 15px rgba(200,240,74,0.2)'; }}
           className="shine-btn cta-btn-mobile"
         >
           Check Resume
@@ -119,8 +143,8 @@ export default function Navbar({ onReset, hasResults }) {
         }
 
         @keyframes shine {
-          0% { left: -100%; transition-property: left; transition-duration: 0.7s; transition-timing-function: linear; }
-          20% { left: 100%; transition-property: left; transition-duration: 0.7s; transition-timing-function: linear; }
+          0% { left: -100%; }
+          20% { left: 100%; }
           100% { left: 100%; }
         }
 
@@ -130,21 +154,10 @@ export default function Navbar({ onReset, hasResults }) {
         }
 
         @media (max-width: 768px) {
-          nav { 
-            width: calc(100% - 16px) !important; 
-            min-width: auto !important; 
-            left: 8px !important; 
-            transform: none !important; 
-            top: 8px !important;
-            padding: 0 12px !important;
-          }
-          .nav-flex-container { gap: 8px !important; }
-          .nav-hide-mobile { display: none !important; } /* Hide 'How it works' on mobile for a cleaner, focused UI */
+          .nav-hide-mobile { display: none !important; }
           .cta-btn-mobile { 
             padding: 8px 14px !important; 
             font-size: 11px !important;
-            white-space: nowrap !important;
-            flex-shrink: 0 !important;
           }
           .brand-text-mobile { font-size: 17px !important; }
         }

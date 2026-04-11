@@ -46,19 +46,27 @@ function ScoreBar({ score, color }) {
   );
 }
 
-function ScoreCard({ label, icon, score, description, delay }) {
+function ScoreCard({ label, icon, score, reason, evidence, delay }) {
   const color = score >= 75 ? '#3ddc84' : score >= 55 ? '#ffb830' : '#ff5252';
+
   return (
-    <div className="reveal-up score-card-hover" style={{
-      background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)',
-      borderRadius: 16, padding: '24px', display: 'flex', flexDirection: 'column', gap: 12,
-      animationDelay: `${delay}ms`, transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-      backdropFilter: 'blur(10px)'
-    }}>
+    <div
+      className="reveal-up score-card-hover"
+      style={{
+        background: 'rgba(255,255,255,0.02)',
+        border: '1px solid rgba(255,255,255,0.06)',
+        borderRadius: 20, padding: '24px', display: 'flex', flexDirection: 'column', gap: 12,
+        animationDelay: `${delay}ms`, transition: 'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
+        backdropFilter: 'blur(10px)',
+      }}
+    >
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <span style={{ fontSize: 13, color: 'rgba(240,240,245,0.4)', fontWeight: 500 }}>{icon} {label}</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ fontSize: 13, color: 'rgba(240,240,245,0.4)', fontWeight: 500 }}>{icon} {label}</span>
+        </div>
         <span style={{ fontFamily: 'DM Mono, monospace', fontSize: 24, color, fontWeight: 600 }}>{score}</span>
       </div>
+
       <ScoreBar score={score} color={color} />
     </div>
   );
@@ -163,9 +171,13 @@ export default function Results({ data, onReset }) {
               <div>
                 <div style={{ fontSize: 11, color: 'rgba(240,240,245,0.4)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: 6 }}>Experience Profile</div>
                 <div style={{ fontSize: 15, fontWeight: 600, color: '#f0f0f5', display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span>{data.candidate_experience_years || '0 Yrs'}</span>
-                  <span style={{ fontSize: 10, color: 'rgba(240,240,245,0.2)', fontWeight: 400 }}>VS</span>
-                  <span style={{ color: '#c8f04a' }}>{data.experience_years_required || 'Any'}</span>
+                  <span>{data.candidate_experience_years || 'Not Specified'}</span>
+                  {data.experience_years_required && data.experience_years_required !== 'Not Specified' && data.experience_years_required !== 'N/A' && (
+                    <>
+                      <span style={{ fontSize: 10, color: 'rgba(240,240,245,0.2)', fontWeight: 400 }}>VS</span>
+                      <span style={{ color: '#c8f04a' }}>{data.experience_years_required}</span>
+                    </>
+                  )}
                 </div>
               </div>
               <div>
@@ -179,7 +191,7 @@ export default function Results({ data, onReset }) {
         {/* Sub-score cards */}
         <div className="results-sub-grid" style={{ display: 'grid', gap: 16, marginBottom: 50 }}>
           {data.scores && Object.values(data.scores).map((s, i) => (
-            <ScoreCard key={i} label={s.label} icon={s.icon} score={s.score} description={s.description} delay={300 + (i * 100)} />
+            <ScoreCard key={i} label={s.label} icon={s.icon} score={s.score} reason={s.reason} evidence={s.evidence} delay={300 + (i * 100)} />
           ))}
         </div>
 
@@ -204,7 +216,7 @@ export default function Results({ data, onReset }) {
         </div>
 
         {/* Swipeable Content Area */}
-        <div 
+        <div
           key={activeTab}
           className="reveal-up"
           onTouchStart={handleTouchStart}
@@ -228,20 +240,27 @@ export default function Results({ data, onReset }) {
                 </div>
               </GlassCard>
               <GlassCard style={{ padding: 40 }}>
-                <h4 style={{ fontSize: 16, fontWeight: 600, marginBottom: 24, color: '#f0f0f5' }}>Executive Summary</h4>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                  {(data.issues || []).slice(0, 3).map((issue, i) => {
-                    const sc = severityConfig[issue.severity] || severityConfig.info;
-                    return (
-                      <div key={i} style={{ display: 'flex', gap: 16, padding: '20px', background: sc.bg, borderRadius: 16, border: `1px solid ${sc.color}15` }}>
-                        <span style={{ fontSize: 18 }}>{sc.icon}</span>
-                        <div>
-                          <div style={{ fontWeight: 600, fontSize: 14, color: '#f0f0f5', marginBottom: 4 }}>{issue.title}</div>
-                          <div style={{ fontSize: 13, color: 'rgba(240,240,245,0.55)', lineHeight: 1.5 }}>{issue.description}</div>
+                <h4 style={{ fontSize: 16, fontWeight: 600, marginBottom: 20, color: '#f0f0f5' }}>Priority Focus Areas</h4>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                  {data.scores && Object.values(data.scores)
+                    .sort((a, b) => a.score - b.score)
+                    .slice(0, 3)
+                    .map((s, i) => {
+                      const barColor = s.score >= 75 ? '#3ddc84' : s.score >= 55 ? '#ffb830' : '#ff5252';
+                      return (
+                        <div key={i} style={{ padding: '14px 18px', background: 'rgba(255,255,255,0.02)', borderRadius: 14, border: `1px solid ${barColor}15` }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+                            <span style={{ fontSize: 13, fontWeight: 600, color: '#f0f0f5' }}>{s.icon} {s.label}</span>
+                            <span style={{ fontFamily: 'DM Mono, monospace', fontSize: 14, fontWeight: 600, color: barColor }}>{s.score}/100</span>
+                          </div>
+                          <ScoreBar score={s.score} color={barColor} />
+                          {s.reason && (
+                            <div style={{ fontSize: 12, color: 'rgba(240,240,245,0.4)', lineHeight: 1.5, marginTop: 10 }}>{s.reason}</div>
+                          )}
                         </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })
+                  }
                 </div>
               </GlassCard>
             </div>
@@ -256,23 +275,24 @@ export default function Results({ data, onReset }) {
               ].map(({ title, items, color, bg, border, icon }) => {
                 const cleanItems = [...new Set((items || []).flatMap(ix => typeof ix === 'string' ? ix.split(/[,;]/).map(s => s.trim()) : []).filter(Boolean))];
                 return cleanItems.length > 0 && (
-                <GlassCard key={title} style={{ padding: 40 }}>
-                  <h3 style={{ fontSize: 16, fontWeight: 600, marginBottom: 24, color }}>{title.toUpperCase()}</h3>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12 }}>
-                    {cleanItems.map((kw, i) => (
-                      <span key={i} className="keyword-tag" style={{
-                        fontFamily: 'DM Mono, monospace', fontSize: 13,
-                        background: bg, border: `1px solid ${border}`,
-                        color, borderRadius: 100, padding: '8px 20px',
-                        display: 'inline-flex', alignItems: 'center', gap: 8,
-                        transition: 'all 0.2s'
-                      }}>
-                        <span style={{ fontSize: 12, opacity: 0.6 }}>{icon}</span> {kw}
-                      </span>
-                    ))}
-                  </div>
-                </GlassCard>
-              )})}
+                  <GlassCard key={title} style={{ padding: 40 }}>
+                    <h3 style={{ fontSize: 16, fontWeight: 600, marginBottom: 24, color }}>{title.toUpperCase()}</h3>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12 }}>
+                      {cleanItems.map((kw, i) => (
+                        <span key={i} className="keyword-tag" style={{
+                          fontFamily: 'DM Mono, monospace', fontSize: 13,
+                          background: bg, border: `1px solid ${border}`,
+                          color, borderRadius: 100, padding: '8px 20px',
+                          display: 'inline-flex', alignItems: 'center', gap: 8,
+                          transition: 'all 0.2s'
+                        }}>
+                          <span style={{ fontSize: 12, opacity: 0.6 }}>{icon}</span> {kw}
+                        </span>
+                      ))}
+                    </div>
+                  </GlassCard>
+                )
+              })}
             </div>
           )}
 
