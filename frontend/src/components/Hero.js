@@ -37,15 +37,25 @@ const StatCard = ({ target, suffix, label, index }) => {
       transition: 'all 0.3s ease',
       cursor: 'default',
       willChange: 'transform, background',
+      contain: 'layout style',
     }}
       className="stat-card"
     >
       <div style={{
         fontFamily: 'Fraunces, serif', fontSize: 44, fontWeight: 500, color: '#c8f04a',
         lineHeight: 1, marginBottom: 8, display: 'flex', justifyContent: 'center', alignItems: 'baseline',
-        fontVariantNumeric: 'tabular-nums'
+        fontVariantNumeric: 'tabular-nums',
+        transform: 'translateZ(0)',
+        backface-visibility: 'hidden',
       }}>
-        <span>{count}</span>
+        <div style={{ 
+          minWidth: '1.8ch', 
+          display: 'inline-flex', 
+          justifyContent: 'center',
+          willChange: 'content'
+        }}>
+           <span>{count}</span>
+        </div>
         <span style={{ fontSize: 24, marginLeft: 2, opacity: 0.8 }}>{suffix}</span>
       </div>
       <div style={{ fontSize: 13, color: 'rgba(240,240,245,0.5)', lineHeight: 1.4 }}>{label}</div>
@@ -65,6 +75,7 @@ export default function Hero() {
       padding: '120px 24px 60px',
       position: 'relative',
       overflow: 'hidden',
+      contain: 'layout paint',
     }}>
       {/* Background grid */}
       <div style={{

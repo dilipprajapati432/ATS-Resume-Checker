@@ -21,24 +21,34 @@ export default function Navbar({ onReset, hasResults }) {
 
   const floatingContainerStyle = {
     position: 'fixed',
-    top: scrolled ? 12 : 0,
-    left: '50%',
-    transform: `translateX(-50%) ${scrolled ? 'translateY(0)' : 'translateY(-10px)'}`,
+    top: 0,
+    left: 0,
+    width: '100%',
+    padding: scrolled ? '12px 28px' : '0 40px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 1000,
+    transition: 'all 0.5s cubic-bezier(0.16, 1, 0.3, 1)',
+    pointerEvents: 'none',
+  };
+
+  const navInnerStyle = {
     width: scrolled ? 'max-content' : '100%',
     minWidth: scrolled ? 'clamp(320px, 92%, 1100px)' : '100%',
-    padding: scrolled ? '0 28px' : '0 40px',
+    height: scrolled ? 64 : 72,
     background: scrolled ? 'rgba(10,10,15,0.75)' : 'transparent',
     backdropFilter: scrolled ? 'blur(24px)' : 'none',
     border: scrolled ? '1px solid rgba(255,255,255,0.08)' : 'none',
     borderRadius: scrolled ? 100 : 0,
+    padding: '0 24px',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
-    zIndex: 1000,
-    transition: 'all 0.6s cubic-bezier(0.16, 1, 0.3, 1)',
+    transition: 'all 0.5s cubic-bezier(0.16, 1, 0.3, 1)',
     boxShadow: scrolled ? '0 20px 40px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.05)' : 'none',
     pointerEvents: 'auto',
-    height: scrolled ? 64 : 72,
+    transform: scrolled ? 'translateY(0)' : 'translateY(0)',
   };
 
   const brandIconStyle = {
@@ -69,41 +79,43 @@ export default function Navbar({ onReset, hasResults }) {
 
   return (
     <nav style={floatingContainerStyle}>
-      <button
-        type="button"
-        onClick={() => {
-          onReset();
-          window.scrollTo({ top: 0, behavior: 'smooth' });
-        }}
-        style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 12 }}
-      >
-        <div style={brandIconStyle}>⚡</div>
-        <span className="brand-text-mobile" style={{
-          fontFamily: 'Fraunces, serif', fontSize: scrolled ? 19 : 21,
-          fontWeight: 500, color: '#f0f0f5', letterSpacing: '-0.5px',
-          transition: 'all 0.5s ease'
-        }}>
-          Resume<span style={{ color: '#c8f04a', fontStyle: 'italic' }}>IQ</span>
-        </span>
-      </button>
+      <div style={navInnerStyle}>
+        <button
+          type="button"
+          onClick={() => {
+            onReset();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }}
+          style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 12 }}
+        >
+          <div style={brandIconStyle}>⚡</div>
+          <span className="brand-text-mobile" style={{
+            fontFamily: 'Fraunces, serif', fontSize: scrolled ? 19 : 21,
+            fontWeight: 500, color: '#f0f0f5', letterSpacing: '-0.5px',
+            transition: 'all 0.5s ease'
+          }}>
+            Resume<span style={{ color: '#c8f04a', fontStyle: 'italic' }}>IQ</span>
+          </span>
+        </button>
 
-      <div className="nav-flex-container" style={{ display: 'flex', alignItems: 'center', gap: scrolled ? 16 : 32, transition: 'gap 0.5s ease' }}>
-        <a
-          href="#how-it-works"
-          onClick={e => { if (hasResults) onReset(); }}
-          style={linkStyle}
-          className="nav-link-hover nav-hide-mobile"
-        >
-          How it works
-        </a>
-        <a
-          href="#analyze-section"
-          onClick={e => { if (hasResults) onReset(); }}
-          style={ctaStyle}
-          className="shine-btn cta-btn-mobile"
-        >
-          Check Resume
-        </a>
+        <div className="nav-flex-container" style={{ display: 'flex', alignItems: 'center', gap: scrolled ? 16 : 32, transition: 'gap 0.5s ease' }}>
+          <a
+            href="#how-it-works"
+            onClick={e => { if (hasResults) onReset(); }}
+            style={linkStyle}
+            className="nav-link-hover nav-hide-mobile"
+          >
+            How it works
+          </a>
+          <a
+            href="#analyze-section"
+            onClick={e => { if (hasResults) onReset(); }}
+            style={ctaStyle}
+            className="shine-btn cta-btn-mobile"
+          >
+            Check Resume
+          </a>
+        </div>
       </div>
 
       <style>{`
