@@ -46,7 +46,7 @@ const StatCard = ({ target, suffix, label, index }) => {
         lineHeight: 1, marginBottom: 8, display: 'flex', justifyContent: 'center', alignItems: 'baseline',
         fontVariantNumeric: 'tabular-nums',
         transform: 'translateZ(0)',
-        backface-visibility: 'hidden',
+        backfaceVisibility: 'hidden',
       }}>
         <div style={{ 
           minWidth: '1.8ch', 
