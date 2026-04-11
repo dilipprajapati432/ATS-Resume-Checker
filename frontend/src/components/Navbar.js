@@ -4,7 +4,6 @@ export default function Navbar({ onReset, hasResults }) {
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
-    let lastScrollY = window.scrollY;
     const onScroll = () => {
       const currentScrollY = window.scrollY;
       // Add hysteresis: enter floating state at 60px, exit at 20px
@@ -13,29 +12,12 @@ export default function Navbar({ onReset, hasResults }) {
       } else if (scrolled && currentScrollY < 20) {
         setScrolled(false);
       }
-      lastScrollY = currentScrollY;
     };
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
   }, [scrolled]);
 
-  const navBaseStyle = {
-    position: 'fixed',
-    top: 0,
-    left: 0,
-    right: 0,
-    width: '100%',
-    height: scrolled ? 66 : 72,
-    padding: scrolled ? '0 28px' : '0 40px',
-    background: scrolled ? 'rgba(10,10,15,0.75)' : 'rgba(10,10,15,0.4)',
-    backdropFilter: 'blur(24px)',
-    borderBottom: scrolled ? 'none' : '1px solid rgba(255,255,255,0.05)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    zIndex: 1000,
-    transition: 'all 0.5s cubic-bezier(0.16, 1, 0.3, 1)',
-  };
+
 
   const floatingContainerStyle = {
     position: 'fixed',
